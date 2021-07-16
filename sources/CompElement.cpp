@@ -3,25 +3,25 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
+ 
 #include "CompElement.h"
 #include "GeoElement.h"
 #include "MathStatement.h"
-#include "CompMesh.h"
-#include "tpanic.h"
+#include "CompMesh.h" 
 #include <math.h> 
+
 using namespace std;
 
 CompElement::CompElement() {
 }
 
-CompElement::CompElement(int64_t ind, CompMesh *cmesh, GeoElement *geo) {
+CompElement::CompElement(int64_t ind, CompMesh* cmesh, GeoElement* geo) {
     compmesh = cmesh;
     index = ind;
     geoel = geo;
 }
 
-CompElement::CompElement(const CompElement &copy) {
+CompElement::CompElement(const CompElement& copy) {
     compmesh = copy.compmesh;
     index = copy.index;
     geoel = copy.geoel;
@@ -29,7 +29,7 @@ CompElement::CompElement(const CompElement &copy) {
     mat = copy.mat;
 }
 
-CompElement &CompElement::operator=(const CompElement &copy) {
+CompElement& CompElement::operator=(const CompElement& copy) {
     compmesh = copy.compmesh;
     index = copy.index;
     geoel = copy.geoel;
@@ -45,24 +45,24 @@ CompElement::~CompElement() {
 //     return new CompElement(*this);
 // }
 
-DOF &CompElement::GetDOF(int i) const
+DOF& CompElement::GetDOF(int i) const
 {
     return compmesh->GetDOF(GetDOFIndex(i));
 }
 
-MathStatement *CompElement::GetStatement() const {
+MathStatement* CompElement::GetStatement() const {
     return mat;
 }
 
-void CompElement::SetStatement(MathStatement *statement) {
+void CompElement::SetStatement(MathStatement* statement) {
     mat = statement;
 }
 
-IntRule *CompElement::GetIntRule() const {
+IntRule* CompElement::GetIntRule() const {
     return intrule;
 }
 
-void CompElement::SetIntRule(IntRule *irule) {
+void CompElement::SetIntRule(IntRule* irule) {
     intrule = irule;
 }
 
@@ -71,23 +71,23 @@ void CompElement::SetIndex(int64_t ind) {
 
 }
 
-GeoElement *CompElement::GetGeoElement() const {
+GeoElement* CompElement::GetGeoElement() const {
     return geoel;
 }
 
-void CompElement::SetGeoElement(GeoElement *element) {
+void CompElement::SetGeoElement(GeoElement* element) {
     geoel = element;
 }
 
-CompMesh *CompElement::GetCompMesh() const {
+CompMesh* CompElement::GetCompMesh() const {
     return compmesh;
 }
 
-void CompElement::SetCompMesh(CompMesh *mesh) {
+void CompElement::SetCompMesh(CompMesh* mesh) {
     compmesh = mesh;
 }
 
-void CompElement::InitializeIntPointData(IntPointData &data) const {
+void CompElement::InitializeIntPointData(IntPointData& data) const {
 
     const int dim = this->Dimension();
     const int nshape = this->NShapeFunctions();
@@ -95,20 +95,21 @@ void CompElement::InitializeIntPointData(IntPointData &data) const {
 
     data.weight = 0;
     data.detjac = 0;
-    data.phi.resize(nshape, 0);
+    data.phi.resize(nshape);
     data.dphidx.resize(dim, nshape);
     data.dphidksi.resize(dim, nshape);
     data.x.resize(3);
-    data.ksi.resize(dim, 0);
+    data.ksi.resize(dim);
     data.gradx.resize(dim, nshape);
     data.axes.resize(dim, 3);
-    data.solution.resize(1, 0);
+    data.solution.resize(1);
     data.dsoldksi.resize(1, 1);
     data.dsoldx.resize(1, 1);
 
 }
 
-void CompElement::ComputeRequiredData(IntPointData &data, VecDouble &intpoint) const {
+void CompElement::ComputeRequiredData(IntPointData& data, VecDouble& intpoint) const {
+
     data.ksi = intpoint;
 
     int dim = this->Dimension();
@@ -128,69 +129,87 @@ void CompElement::ComputeRequiredData(IntPointData &data, VecDouble &intpoint) c
     this->Convert2Axes(data.dphidksi, jacinv, data.dphidx);
 }
 
-void CompElement::Convert2Axes(const MatrixDouble &dphi, const MatrixDouble &jacinv, MatrixDouble &dphidx) const {
+void CompElement::Convert2Axes(const MatrixDouble& dphi, const MatrixDouble& jacinv, MatrixDouble& dphidx) const {
     int nshape = this->NShapeFunctions();
     int dim = this->Dimension();
 
     int ieq;
     switch (dim) {
-        case 0:
-        {
+    case 0:
+    {
 
+    }
+    break;
+    case 1:
+    {
+        for (ieq = 0; ieq < nshape; ieq++) {
+            dphidx(0, ieq) = dphi(0, ieq) * jacinv(0, 0);
         }
-            break;
-        case 1:
-        {
-            for (ieq = 0; ieq < nshape; ieq++) {
-                dphidx(0, ieq) *= jacinv(0, 0);
-            }
+    }
+    break;
+    case 2:
+    {
+        for (ieq = 0; ieq < nshape; ieq++) {
+            dphidx(0, ieq) = jacinv(0, 0) * dphi(0, ieq) + jacinv(1, 0) * dphi(1, ieq);
+            dphidx(1, ieq) = jacinv(0, 1) * dphi(0, ieq) + jacinv(1, 1) * dphi(1, ieq);
         }
-            break;
-        case 2:
-        {
-            for (ieq = 0; ieq < nshape; ieq++) {
-                dphidx(0, ieq) = jacinv(0, 0) * dphi(0, ieq) + jacinv(1, 0) * dphi(1, ieq);
-                dphidx(1, ieq) = jacinv(0, 1) * dphi(0, ieq) + jacinv(1, 1) * dphi(1, ieq);
-            }
+    }
+    break;
+    case 3:
+    {
+        for (ieq = 0; ieq < nshape; ieq++) {
+            dphidx(0, ieq) = jacinv(0, 0) * dphi(0, ieq) + jacinv(1, 0) * dphi(1, ieq) + jacinv(2, 0) * dphi(2, ieq);
+            dphidx(1, ieq) = jacinv(0, 1) * dphi(0, ieq) + jacinv(1, 1) * dphi(1, ieq) + jacinv(2, 1) * dphi(2, ieq);
+            dphidx(2, ieq) = jacinv(0, 2) * dphi(0, ieq) + jacinv(1, 2) * dphi(1, ieq) + jacinv(2, 2) * dphi(2, ieq);
         }
-            break;
-        case 3:
-        {
-            for (ieq = 0; ieq < nshape; ieq++) {
-                dphidx(0, ieq) = jacinv(0, 0) * dphi(0, ieq) + jacinv(1, 0) * dphi(1, ieq) + jacinv(2, 0) * dphi(2, ieq);
-                dphidx(1, ieq) = jacinv(0, 1) * dphi(0, ieq) + jacinv(1, 1) * dphi(1, ieq) + jacinv(2, 1) * dphi(2, ieq);
-                dphidx(2, ieq) = jacinv(0, 2) * dphi(0, ieq) + jacinv(1, 2) * dphi(1, ieq) + jacinv(2, 2) * dphi(2, ieq);
-            }
-        }
-            break;
+    }
+    break;
     }
 }
 
-void CompElement::CalcStiff(MatrixDouble &ek, MatrixDouble &ef) const {
-    MathStatement *material = this->GetStatement();
+void CompElement::CalcStiff(MatrixDouble& ek, MatrixDouble& ef) const {
+    // First thing you need is the variational formulation;
+    // Without the material, you cant do the contribute calculation; Youll get an error.
+    MathStatement* material = this->GetStatement();
     if (!material) {
         std::cout << "Error at CompElement::CalcStiff" << std::endl;
         return;
     }
-    
+    // Second, you should clear the matrices you're going to compute
     ek.setZero();
     ef.setZero();
 
-    IntPointData data;
-    this->InitializeIntPointData(data);
+    //+++++++++++++++++
+    // // Please implement me
+    // std::cout << "\nPLEASE IMPLEMENT ME\n" << __PRETTY_FUNCTION__ << std::endl;
+    // DebugStop();
+
+    IntRule* intrule = this->GetIntRule();
+    int maxIntOrder = 5;
+    intrule->SetOrder(maxIntOrder);
+
+    IntPointData data;                     
+    this->InitializeIntPointData(data);     
+    int nintpoints = intrule->NPoints();    
+
     double weight = 0.;
 
-    IntRule *intrule = this->GetIntRule();
-    int intrulepoints = intrule->NPoints();    
+    for (int nint = 0; nint < nintpoints; nint++) {
+        intrule->Point(nint, data.ksi, weight);     
+        this->ComputeRequiredData(data, data.ksi);  
+        weight *= fabs(data.detjac);
 
-    for (int int_ind = 0; int_ind < intrulepoints; ++int_ind) {
-        std::cout << "Please insert the correct code\n";
-        DebugStop();
+        material->Contribute(data, weight, ek, ef);  
+
+       
+       
     }
+     
 }
 
-void CompElement::EvaluateError(VecDouble &errors) const {
-    MathStatement * material = this->GetStatement();
+
+void CompElement::EvaluateError(std::function<void(const VecDouble& loc, VecDouble& val, MatrixDouble& deriv) > fp, VecDouble& errors) const {
+    MathStatement* material = this->GetStatement();
 
     if (!material) {
         std::cout << "No material for this element\n";
@@ -198,11 +217,12 @@ void CompElement::EvaluateError(VecDouble &errors) const {
     }
 
     int NErrors = material->NEvalErrors();
-    errors.resize(NErrors, 0);
+    errors.resize(NErrors);
+    errors.setZero();
 
 
-    IntRule *intrule = this->GetIntRule();
-    int maxIntOrder = 15;
+    IntRule* intrule = this->GetIntRule();
+    int maxIntOrder = intrule->MaxOrder(); 
     intrule->SetOrder(maxIntOrder);
 
     int dim = Dimension();
@@ -217,6 +237,7 @@ void CompElement::EvaluateError(VecDouble &errors) const {
 
     VecDouble u_exact(nstate);
     MatrixDouble du_exact(dim, nstate);
+    fp(data.x, u_exact, du_exact);
 
     for (int nint = 0; nint < nintpoints; nint++) {
         values.setZero();
@@ -224,9 +245,10 @@ void CompElement::EvaluateError(VecDouble &errors) const {
         this->ComputeRequiredData(data, data.ksi);
         weight *= fabs(data.detjac);
 
+        fp(data.x, u_exact, du_exact);
         this->GetMultiplyingCoeficients(data.coefs);
         data.ComputeSolution();
-        material->ContributeError(data, values);
+        material->ContributeError(data, u_exact, du_exact, values);
 
         for (int ier = 0; ier < NErrors; ier++)
             errors[ier] += weight * values[ier];
@@ -237,8 +259,8 @@ void CompElement::EvaluateError(VecDouble &errors) const {
     }
 }
 
-void CompElement::Solution(VecDouble &intpoint, int var, VecDouble &sol) const {
-    MathStatement * material = this->GetStatement();
+void CompElement::Solution(VecDouble& intpoint, int var, VecDouble& sol) const {
+    MathStatement* material = this->GetStatement();
     if (!material) {
         std::cout << "No material for this element\n";
         return;
@@ -252,3 +274,5 @@ void CompElement::Solution(VecDouble &intpoint, int var, VecDouble &sol) const {
 
     material->PostProcessSolution(data, var, sol);
 }
+ 
+ 

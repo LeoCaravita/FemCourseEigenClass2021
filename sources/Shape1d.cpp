@@ -4,11 +4,10 @@
 //
 //  Created by Philippe Devloo on 03/04/18.
 //
-
+///\cond
 #include <cmath>
 #include <math.h>
-#include "tpanic.h"
-#include "DataTypes.h"
+///\endcond
 #include "Shape1d.h"
 
 void Shape1d::Shape(const VecDouble &xi, VecInt &orders, VecDouble &phi, MatrixDouble &dphi){
@@ -27,12 +26,32 @@ void Shape1d::Shape(const VecDouble &xi, VecInt &orders, VecDouble &phi, MatrixD
     }
     
     auto nshape = NShapeFunctions(orders);
+
     phi.resize(nshape);
-    dphi.resize(1,nshape);
-        
-    std::cout << "Please implement me\n";
-    DebugStop();
+    dphi.resize(1, nshape);
+  
+    double qsi = xi[0];
+
+    phi[0] = (1. - qsi) / 2.;
+    phi[1] = (1. + qsi) / 2.;
+    dphi(0, 0) = -1. / 2.;
+    dphi(0, 1) = 1. / 2.;
+    
+    int is = 2;
+   
+        if (orders[is] == 2) {
+            int is1 = 0;
+            int is2 = 1;
+
+            phi[2] = 4. * phi[is1] * phi[is2];
+            dphi(0, 2) = 4. * (dphi(0, is1) * phi[is2] + phi[is1] * dphi(0, is2));
+        }
+       
+        else if (orders[is] != 1) DebugStop();
+
 }
+
+
 
 /// returns the number of shape functions associated with a side
 int Shape1d::NShapeFunctions(int side, int order){

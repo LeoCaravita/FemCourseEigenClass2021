@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-#include <stdio.h>
+
 #include "GeoElementTemplate.h"
 #include "Geom0d.h"
 #include "Geom1d.h"
@@ -12,8 +12,11 @@
 #include "GeomTriangle.h"
 #include "GeomTetrahedron.h"
 #include "GeoMesh.h"
-#include "tpanic.h"
+///\cond
 #include <math.h> 
+#include <stdio.h>
+///\endcond
+
 using namespace std;
 
 template<class TGeom>
@@ -57,6 +60,7 @@ void GeoElementTemplate<TGeom>::X(const VecDouble &xi, VecDouble &x) const{
             coord(j, i) = node.Coord(j);
         }
     }
+    x.setZero();
     Geom.X(xi, coord, x);
 }
 
@@ -74,7 +78,10 @@ void GeoElementTemplate<TGeom>::GradX(const VecDouble &xi, VecDouble &x, MatrixD
             coord(j, i) = node.Coord(j);
         }
     }
+    x.setZero();
+    gradx.setZero();
     Geom.GradX(xi, coord, x, gradx);
+    // std::cout << "xi " << xi << "\nx " << x << std::endl;
 }
 
 

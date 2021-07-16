@@ -9,10 +9,16 @@
 #ifndef __FemSC__IntRule1d__
 #define __FemSC__IntRule1d__
 
+///\cond
 #include <cmath>
 #include <stdio.h>
+///\endcond
 #include "IntRule.h"
 
+/**
+@brief Integration rule associated with a line
+@ingroup integration
+*/
 class IntRule1d : public IntRule
 {
     

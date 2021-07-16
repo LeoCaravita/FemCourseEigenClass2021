@@ -5,7 +5,6 @@
  */
 
 #include "ShapeTetrahedron.h"
-#include "tpanic.h"
 
 void ShapeTetrahedron::Shape(const VecDouble &xi, VecInt &orders, VecDouble &phi, MatrixDouble &dphi) {
     int nshape = NShapeFunctions(orders);
@@ -44,8 +43,11 @@ void ShapeTetrahedron::Shape(const VecDouble &xi, VecInt &orders, VecDouble &phi
             count++;
         } else if (orders[is] != 1) DebugStop();
     }
+
+   
     if(count != nshape) DebugStop();
     for(int is = 10 ; is< nSides; is++) if(orders[is] != 1 && orders[is] != 2) DebugStop();
+
 }
 
 int ShapeTetrahedron::NShapeFunctions(int side, int order) {

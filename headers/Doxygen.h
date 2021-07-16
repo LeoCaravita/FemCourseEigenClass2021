@@ -21,7 +21,7 @@
  
  Another separate module is the definition of the variational statement. Finite elements applied to partial differential equations invariably apply a Galerkin approximation to a variational statement associated with a (system of) partial differential equation(s). Keeping the classes that compute the integration point contributions seperate allow to use the same class to the Poisson equation and/or elasticity equation.
  
- \page Performing a finite element simulation
+ \page FEM Performing a finite element simulation
  
  In order to perform a finite element simulation a sequence of steps have to be performed:
     - Generate a geometric mesh based on a Gmsh file using the class ReadGmsh
@@ -36,6 +36,18 @@
     - Compute the approximation error with the Analysis::PostProcessError method
  
  HAVE FUN COMPUTING
+ 
+ \page Stiffness Computing an element stiffness matrix
+ 
+ ![Integrating a stiffness matrix](StiffnessIntegral.png)
+ 
+ The above image summarizes the computing of a stiffness matrix for a Poisson problem. From this formula one can deduce the
+ steps necessary to compute an element stiffness matrix
+ 
+ - Initialize the matrices EK and EF
+ - Initialize the IntPointData data structure calling CompElement::InitializeIntPointData
+ - Create an integration rule
+        - Compute the integration point data in IntPointData using CompElement::ComputeRequiredData
  
  */
 #endif

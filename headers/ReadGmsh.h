@@ -8,9 +8,11 @@
 #ifndef ReadGmsh_h
 #define ReadGmsh_h
 
+///\cond
 #include <string>
 #include <vector>
 #include <map>
+///\endcond
 #include "GeoMesh.h"
 
 /**
@@ -23,13 +25,30 @@ class ReadGmsh
 public:
 
     // Constructor of ReadGmsh
-    ReadGmsh() : fMaterialDataVec(3)
+    ReadGmsh() : fMaterialDataVec(4)
     {
         
     }
-    // Reads the mesh contained in the file and fill the geometric mesh
-    void Read(GeoMesh &gmesh, const std::string &filename);
+    /** @brief Reads geometric mesh file from GMsh (.msh)
+     * @param gmesh [output] Reference to a geometric mesh to be filled with elements from msh file
+     * @param file_name Relative path to the .msh file you want to read
+    */
+    void Read(GeoMesh& gmesh, const std::string& file_name);
     
+    
+private:
+    /** @brief Reads geometric mesh file from GMsh (.msh version 3)
+     * @param gmesh [output] Reference to a geometric mesh to be filled with elements from msh file
+     * @param file_name Relative path to the .msh file you want to read
+    */
+    void Read3(GeoMesh &gmesh, const std::string &file_name);
+
+
+    /** @brief Reads geometric mesh file from GMsh (.msh version 4.1)
+     * @param gmesh [output] Reference to a geometric mesh to be filled with elements from msh file
+     * @param file_name Relative path to the .msh file you want to read
+    */
+    void Read4(GeoMesh &gmesh, const std::string &file_name);
 protected:
     
     /** @brief MaterialVec */

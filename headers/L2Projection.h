@@ -9,10 +9,9 @@
 #define L2Projection_h
 
 #include "MathStatement.h"
-#include "DataTypes.h"
-#include  "IntPointData.h"
+///\cond
 #include <functional>
-
+///\endcond
 /**
  @brief Implements and L2 projection
  @ingroup mathstatement
@@ -98,7 +97,7 @@ public:
     
     // Return the number of state variables
     virtual int NState() const {
-        return 2;
+        return BCVal2.rows();
     };
     
     // Return the number of errors
@@ -116,7 +115,7 @@ public:
     virtual void Contribute(IntPointData &integrationpointdata, double weight, MatrixDouble &EK, MatrixDouble &EF) const;
     
     // Method to implement error over element's volume
-    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &errors) const;
+    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &u_exact, MatrixDouble &du_exact, VecDouble &errors) const;
     
     // Prepare and print post processing data
     virtual void PostProcessSolution(const IntPointData &integrationpointdata, const int var, VecDouble &sol) const;

@@ -9,10 +9,9 @@
 #define Poisson_h
 
 #include "MathStatement.h"
-#include "DataTypes.h"
-#include  "IntPointData.h"
+///\cond
 #include <functional>
-
+///\endcond
 /**
  @brief Implements a poisson problem in 1-, 2- or 3-dimensions
  @ingroup mathstatement
@@ -81,9 +80,9 @@ public:
     
     virtual int NEvalErrors() const;
     
-//    int Dimension() const {
-//        return 2;
-//    }
+    //int Dimension() const {
+    //   return 2;
+    //}
     
     
     virtual int VariableIndex(const PostProcVar var) const;
@@ -99,7 +98,7 @@ public:
     virtual void Contribute(IntPointData &integrationpointdata, double weight , MatrixDouble &EK, MatrixDouble &EF) const;
     
     // Method to implement error over element's volume
-    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &errors) const;
+    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &u_exact, MatrixDouble &du_exact, VecDouble &errors) const;
     
     // Prepare and print post processing data
     virtual void PostProcessSolution(const IntPointData &integrationpointdata, const int var, VecDouble &sol) const;

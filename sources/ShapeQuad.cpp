@@ -5,8 +5,6 @@
 //  Created by Philippe Devloo on 03/04/18.
 //
 
-#include "DataTypes.h"
-#include "tpanic.h"
 #include "Shape1d.h"
 #include "ShapeQuad.h"
 
@@ -30,10 +28,79 @@ void ShapeQuad::Shape(const VecDouble &xi, VecInt &orders, VecDouble &phi, Matri
     if (orders[nf-1] > 2) {
         std::cout << "ShapeQuad::Shape, only implemented until order = 2" << std::endl;
         DebugStop();
+    }    
+
+    //número de funções
+    int nshape = NShapeFunctions(orders);
+    int nsides = nSides;
+
+    //Define o tamanho de phi e dphi
+    phi.resize(nshape);
+    dphi.resize(2, nshape);
+
+    //Calcula os phis lineares
+    phi(0) = (1. - xi[0]) * (1. - xi[1]) * (1. / 4.);
+    phi(1) = (1. + xi[0]) * (1. - xi[1]) * (1. / 4.);
+    phi(2) = (1. + xi[0]) * (1. + xi[1]) * (1. / 4.);
+    phi(3) = (1. - xi[0]) * (1. + xi[1]) * (1. / 4.);
+
+    // calculas os dphis lineares
+    dphi(0, 0) = (-1. + xi[1]) * (1. / 4.);
+    dphi(0, 1) = (1. - xi[1]) * (1. / 4.);
+    dphi(0, 2) = (1. + xi[1]) * (1. / 4.);
+    dphi(0, 3) = (-1. - xi[1]) * (1. / 4.);
+
+    dphi(1, 0) = (-1. + xi[0]) * (1. / 4.);
+    dphi(1, 1) = (-1. - xi[0]) * (1. / 4.);
+    dphi(1, 2) = (1. + xi[0]) * (1. / 4.);
+    dphi(1, 3) = (1. - xi[0]) * (1. / 4.);
+
+    int count = 4;
+
+    //calcula os sides shapes
+    for (int i = 4; i < 8; i++) {
+        if (orders(i) == 2) {
+            switch (count)
+            {
+            case 4:
+                phi(count) = (1. - xi[0] * xi[0]) * (1. - xi[1]) / 2.;
+                dphi(0, count) = (-2. * xi[0] + 2. * xi[0] * xi[1]) / 2.;
+                dphi(1, count) = (-1. + xi[0] * xi[0]) / 2.;
+                break;
+            case 5:
+                phi(count) = (1. + xi[0]) * (1. - xi[1] * xi[1]) / 2.;
+                dphi(0, count) = (1. - xi[1] * xi[1]) / 2.;
+                dphi(1, count) = (-2. * xi[1] - 2. * xi[1] * xi[0]) / 2.;
+                break;
+            case 6:
+                phi(count) = (1. - xi[0] * xi[0]) * (1. + xi[1]) / 2.;
+                dphi(0, count) = (-2. * xi[0] - 2. * xi[0] * xi[1]) / 2.;
+                dphi(1, count) = (1. - xi[0] * xi[0]) / 2.;
+                break;
+            case 7:
+                phi(count) = (1. - xi[0]) * (1. - xi[1] * xi[1]) / 2.;
+                dphi(0, count) = (-1. + xi[1] * xi[1]) / 2.;
+                dphi(1, count) = (-2. * xi[1] + 2. * xi[1] * xi[0]) / 2.;
+                break;
+            }
+            count++;
+        }
+        else if (orders(i) != 1) DebugStop();
     }
 
-    std::cout << "Please implement me\n";
-    DebugStop();
+
+    //calcula o shape do internal side
+    if (orders(8) == 2) {
+        phi(count) = (1. - xi[0] * xi[0]) * (1. - xi[1] * xi[1]);
+        dphi(0, count) = (-2. * xi[0] + 2. * xi[1] * xi[1] * xi[0]);
+        dphi(1, count) = (-2. * xi[1] + 2. * xi[1] * xi[0] * xi[0]);
+        count++;
+    }
+    else if (orders(8) != 1) DebugStop();
+
+
+    if (count != nshape) DebugStop();
+
 }
 
 /// returns the number of shape functions associated with a side
@@ -59,6 +126,6 @@ int ShapeQuad::NShapeFunctions(VecInt &orders){
     for(int in=4; in<orders.size(); in++) {
         res += NShapeFunctions(in, orders[in]);
     }
-    
+   
     return res;
 }

@@ -7,7 +7,10 @@
 
 #ifndef PostProcess_h
 #define PostProcess_h
+
+///\cond
 #include <functional>
+///\endcond
 #include "DataTypes.h"
 
 class Analysis;
@@ -19,34 +22,25 @@ class Analysis;
 class PostProcess
 {
 protected:
-    
-    Analysis *Reference;
-
     // Pointer to Exact solution function, it is necessary to calculating errors
     std::function<void (const VecDouble &loc, VecDouble &result, MatrixDouble &deriv)> fExact;
     
 public:
     
-    PostProcess(){
-        Reference=0;
+    PostProcess() : fExact(0){
     }
 
     PostProcess(const PostProcess &copy){
-        Reference=copy.Reference;
+        fExact = copy.fExact;
     }
-    
+
     ~PostProcess(){
-        
+
     }
-    
-    
+
     PostProcess &operator=(const PostProcess &cp){
-        Reference=cp.Reference;
+        fExact = cp.fExact;
         return *this;
-    }
-    
-    PostProcess(Analysis *Ref){
-        Reference=Ref;
     }
     
     virtual void Write(std::string filename){

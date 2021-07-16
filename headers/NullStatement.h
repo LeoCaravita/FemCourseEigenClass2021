@@ -9,10 +9,9 @@
 #define NULL_h
 
 #include "MathStatement.h"
-#include "DataTypes.h"
-#include  "IntPointData.h"
+///\cond
 #include <functional>
-
+///\endcond
 /**
  @brief Implements a NULL variational formulation
  @ingroup mathstatement
@@ -70,7 +69,7 @@ public:
     }
 
     // Method to implement error over element's volume
-    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &errors) const
+    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &u_exact, MatrixDouble &du_exact, VecDouble &errors) const
     {
         DebugStop();
     }

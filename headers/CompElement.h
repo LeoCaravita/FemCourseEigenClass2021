@@ -8,11 +8,11 @@
 #ifndef CompElement_h
 #define CompElement_h
 
-#include "DataTypes.h"
 #include "IntRule.h"
-//#include "IntPointData.h"
-//#include "PostProcess.h"
+
+///\cond
 #include <functional>
+///\endcond
 
 class CompMesh;
 class GeoElement;
@@ -116,8 +116,9 @@ public:
     virtual void CalcStiff(MatrixDouble &ek, MatrixDouble &ef) const;
     
     // Compute error and exact solution
-    virtual void EvaluateError(VecDouble &errors) const;
-                                       
+    virtual void EvaluateError(std::function<void(const VecDouble &loc,VecDouble &val,MatrixDouble &deriv)> fp,
+                               VecDouble &errors) const;
+    
     // Compute shape functions set at point x
     virtual void ShapeFunctions(const VecDouble &intpoint, VecDouble &phi, MatrixDouble &dphi) const = 0;
     
@@ -143,7 +144,7 @@ public:
     DOF &GetDOF(int i) const;
     
     // Return the number of degree of freedom
-    virtual int NDOF() const = 0;
+    virtual int64_t NDOF() const = 0;
     
     // Return the number of shape functions stored in the DOF data structure
     virtual int NShapeFunctions(int doflocindex) const = 0;

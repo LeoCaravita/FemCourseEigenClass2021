@@ -8,7 +8,6 @@
 #ifndef MathStatement_h
 #define MathStatement_h
 
-#include "DataTypes.h"
 #include "IntPointData.h"
 #include "PostProcess.h"
 
@@ -41,12 +40,7 @@ public:
     
     // Constructor of MathStatement
     MathStatement();
-
-    // Constructor with matid
-    MathStatement(int Pmatid) : MathDim(-1), matid(Pmatid)
-    {
-    }
-
+    
     // Copy constructor of MathStatement
     MathStatement(const MathStatement &copy);
     
@@ -69,7 +63,7 @@ public:
     virtual void Contribute(IntPointData &integrationpointdata, double weight, MatrixDouble &EK, MatrixDouble &EF) const = 0;
     
     // Method to implement error over element's volume
-    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &errors) const = 0;
+    virtual void ContributeError(IntPointData &integrationpointdata, VecDouble &u_exact, MatrixDouble &du_exact, VecDouble &errors) const = 0;
     
     virtual void SetMatID(int indexmat){
         matid = indexmat;
@@ -91,7 +85,7 @@ public:
     virtual void PostProcessSolution(const IntPointData &integrationpointdata, const int var, VecDouble &sol) const = 0;
     
     
-    virtual void Axes2XYZ(const MatrixDouble &dudaxes, MatrixDouble &dudx, const MatrixDouble &axesv, bool colMajor = true) const;
+    virtual void Axes2XYZ(const MatrixDouble &dudaxes, MatrixDouble &dudx, const MatrixDouble &axesv) const;
     
     //Method to print MathStatement
     virtual void Print(std::ostream &out);

@@ -5,31 +5,30 @@
  */
 
 #include "Poisson.h"
-#include "PostProcess.h"
 #include <functional>
 #include <string.h>
+
 
 Poisson::Poisson() {
 }
 
-Poisson::Poisson(int materialid, MatrixDouble &perm) : MathStatement(materialid), forceFunction(0), SolutionExact(0) {
+Poisson::Poisson(int materialid, MatrixDouble& perm) {
     permeability = perm;
+    this->SetMatID(materialid);
 }
 
-Poisson::Poisson(const Poisson &copy) {
+Poisson::Poisson(const Poisson& copy) {
     permeability = copy.permeability;
     forceFunction = copy.forceFunction;
-    SolutionExact = copy.SolutionExact;
 }
 
-Poisson &Poisson::operator=(const Poisson &copy) {
+Poisson& Poisson::operator=(const Poisson& copy) {
     permeability = copy.permeability;
     forceFunction = copy.forceFunction;
-    SolutionExact = copy.SolutionExact;
     return *this;
 }
 
-Poisson *Poisson::Clone() const {
+Poisson* Poisson::Clone() const {
     return new Poisson(*this);
 }
 
@@ -40,7 +39,7 @@ MatrixDouble Poisson::GetPermeability() const {
     return permeability;
 }
 
-void Poisson::SetPermeability(const MatrixDouble &perm) {
+void Poisson::SetPermeability(const MatrixDouble& perm) {
     permeability = perm;
 }
 
@@ -61,7 +60,7 @@ int Poisson::VariableIndex(const PostProcVar var) const {
     return -1;
 }
 
-Poisson::PostProcVar Poisson::VariableIndex(const std::string &name) {
+Poisson::PostProcVar Poisson::VariableIndex(const std::string& name) {
     if (!strcmp("Sol", name.c_str())) return ESol;
     if (!strcmp("DSol", name.c_str())) return EDSol;
     if (!strcmp("Flux", name.c_str())) return EFlux;
@@ -91,31 +90,22 @@ int Poisson::NSolutionVariables(const PostProcVar var) {
     return -1;
 }
 
-void Poisson::ContributeError(IntPointData &data, VecDouble &errors) const {
-    VecDouble u_exact(1);
-    MatrixDouble du_exact(1,1);
-    if(SolutionExact)
-    {
-        SolutionExact(data.x,u_exact,du_exact);
-    }
-    else
-    {
-        DebugStop();
-    }
-    errors.resize(NEvalErrors(), 0);
+void Poisson::ContributeError(IntPointData& data, VecDouble& u_exact, MatrixDouble& du_exact, VecDouble& errors) const {
+    errors.resize(NEvalErrors());
+    errors.setZero();
     MatrixDouble gradu;
     MatrixDouble axes = data.axes;
 
     VecDouble u = data.solution;
-    MatrixDouble dudx = data.dsoldx;
+    MatrixDouble dudx = data.dsoldx; 
 
     this->Axes2XYZ(dudx, gradu, axes);
 
     double diff = 0.0;
     for (int i = 0; i < this->NState(); i++) {
         diff = (u[i] - u_exact[i]);
-        errors[0] += diff*diff;
-    }
+        errors[0] += diff * diff;
+    } 
 
     errors[1] = 0.;
     int dim = this->Dimension();
@@ -123,129 +113,143 @@ void Poisson::ContributeError(IntPointData &data, VecDouble &errors) const {
     for (int i = 0; i < dim; i++) {
         for (int j = 0; j < nstate; j++) {
             diff = (gradu(i, j) - du_exact(i, j));
-            errors[1] += diff*diff;
-        }
+            errors[1] += diff * diff;
+        } 
 
     }
-    errors[2] = errors[0] + errors[1];
+    errors[2] = errors[0] + errors[1]; 
 }
 
-void Poisson::Contribute(IntPointData &data, double weight, MatrixDouble &EK, MatrixDouble &EF) const {
+void Poisson::Contribute(IntPointData& data, double weight, MatrixDouble& EK, MatrixDouble& EF) const {
+
     VecDouble phi = data.phi;
-    MatrixDouble dphi = data.dphidx;
-    MatrixDouble axes = data.axes;
+    MatrixDouble dphi = data.dphidx; 
+    MatrixDouble axes = data.axes;   
     MatrixDouble dphi2, dphi3;
 
-    this->Axes2XYZ(dphi, dphi2, axes);
+    
+    int nstate = this->NState();
+    dphi2 = data.axes.transpose() * data.dphidx;
     dphi3 = dphi2.transpose();
 
-    int nshape = phi.size();
-    int nstate = this->NState();
-    int dim = dphi.rows();
-
     MatrixDouble perm(3, 3);
-    std::function<void(const VecDouble &co, VecDouble & result) > force;
-
     perm = this->GetPermeability();
-    force = this->GetForceFunction();
+    double res = 0.; 
+                     
 
-    VecDouble res(nstate);
-    if(force)
-    {
-        force(data.x, res);
+    auto force = this->GetForceFunction();
+    if (force) {
+        VecDouble resloc(nstate);
+        force(data.x, resloc);
+        res = resloc[0];
     }
-
-    std::cout << "Please Implement me\n";
-    DebugStop();
+ 
+    EF += phi * (res * weight);
+    EK += dphi3 * perm * dphi2 * weight;
 
 }
 
-void Poisson::PostProcessSolution(const IntPointData &data, const int var, VecDouble &Solout) const {
+void Poisson::PostProcessSolution(const IntPointData& data, const int var, VecDouble& Solout) const {
     VecDouble sol = data.solution;
     int solsize = sol.size();
-    int rows = data.dsoldx.rows();
-    int cols = data.dsoldx.cols();
-    MatrixDouble gradu(rows, cols);
-    gradu = data.dsoldx;
+    int rows = data.dsoldx.rows();  
+    int cols = data.dsoldx.cols();  
+    MatrixDouble gradu(rows, cols); 
+    gradu = data.dsoldx;           
+
+    MatrixDouble gradudx, flux;
+    gradudx = data.axes.transpose() * data.dsoldx;
+    flux = -permeability * gradudx;
 
     int nstate = this->NState();
+    if (nstate != 1) DebugStop();
 
     switch (var) {
-        case 0: //None
-        {
-            std::cout << " Var index not implemented " << std::endl;
-            DebugStop();
+    case 0: //None
+    {
+        std::cout << " Var index not implemented " << std::endl;
+        DebugStop();
+
+    }
+
+    case 1: //ESol
+    {
+        
+        Solout.resize(solsize);
+        Solout = sol;
+
+        
+    }
+    break;
+
+    case 2: //EDSol
+    {
+        
+       
+        Solout.resize(3);
+        for (int i = 0; i < 3; i++) {
+            Solout[i] = gradudx(i, 0);
         }
-
-        case 1: //ESol
-        {
-            Solout.resize(nstate);
-            std::cout << "Please Implement me\n";
-            DebugStop();
+        //+++++++++++++++++           
+    }
+    break;
+    case 3: //EFlux
+    {
+        
+        Solout.resize(3);
+        for (int i = 0; i < 3; i++) {
+            Solout[i] = flux(i, 0);
         }
-            break;
+        //+++++++++++++++++
+    }
+    break;
 
-        case 2: //EDSol
-        {
-            Solout.resize(rows * cols);
-            std::cout << "Please Implement me\n";
-            DebugStop();
+    case 4: //EForce
+    {   
 
+        Solout.resize(nstate);
+        if (forceFunction) this->forceFunction(data.x, Solout);
+        else Solout.setZero();
+    }
+    break;
+
+    case 5: //ESolExact
+    {
+        //+++++++++++++++++
+        Solout.resize(nstate);
+        VecDouble sol(nstate);
+        MatrixDouble dsol(3, nstate);
+        if (SolutionExact) this->SolutionExact(data.x, Solout, dsol);
+        else Solout.setZero();
+        //+++++++++++++++++
+    }
+    break;
+    case 6: //EDSolExact
+    {
+        //+++++++++++++++++
+        Solout.resize(3);
+        VecDouble sol(nstate);
+        MatrixDouble dsol(3, nstate);
+        if (SolutionExact) this->SolutionExact(data.x, sol, dsol);
+        else dsol.setZero();
+
+        for (int i = 0; i < 3; i++) {
+            Solout[i] = dsol(i, 0);
         }
-            break;
-        case 3: //EFlux
-        {
-            std::cout << "Please Implement me\n";
-            DebugStop();
-
-        }
-            break;
-
-        case 4: //EForce
-        {
-            Solout.resize(nstate);
-            std::cout << "Please Implement me\n";
-            DebugStop();
-
-        }
-            break;
-
-        case 5: //ESolExact
-        {
-            Solout.resize(nstate);
-            VecDouble sol(nstate);
-            MatrixDouble dsol(nstate, nstate);
-            this->SolutionExact(data.x, sol, dsol);
-            for (int i = 0; i < nstate; i++) {
-                Solout[i] = sol[i];
-            }
-        }
-            break;
-        case 6: //EDSolExact
-        {
-            Solout.resize(rows * cols);
-            VecDouble sol(nstate);
-            MatrixDouble dsol(nstate, nstate);
-            this->SolutionExact(data.x, sol, dsol);
-
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
-                    Solout[i * cols + j] = dsol(i, j);
-                }
-            }
-        }
-            break;
+        //+++++++++++++++++
+    }
+    break;
 
 
-        default:
-        {
-            std::cout << " Var index not implemented " << std::endl;
-            DebugStop();
-        }
+    default:
+    {
+        std::cout << " Var index not implemented " << std::endl;
+        DebugStop();
+    }
     }
 }
 
-double Poisson::Inner(MatrixDouble &S, MatrixDouble & T) const {
+double Poisson::Inner(MatrixDouble& S, MatrixDouble& T) const {
     double inner = 0;
     for (int i = 0; i < S.rows(); i++) {
         for (int j = 0; j < S.cols(); j++) {
@@ -254,3 +258,5 @@ double Poisson::Inner(MatrixDouble &S, MatrixDouble & T) const {
     }
     return inner;
 }
+
+

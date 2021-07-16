@@ -6,8 +6,6 @@
 //
 
 #include "ShapeTriangle.h"
-#include "DataTypes.h"
-#include "tpanic.h"
 #include "Shape1d.h"
 
 /// computes the shape functions in function of the coordinate in parameter space and orders of the shape functions (size of orders is number of sides of the element topology)
@@ -31,22 +29,68 @@ void ShapeTriangle::Shape(const VecDouble &xi, VecInt &orders, VecDouble &phi, M
         std::cout << "ShapeTriangle::Shape, only implemented until order = 2" << std::endl;
         DebugStop();
     }
-    
+
+    //número de funções
+    int nshape = NShapeFunctions(orders);
+    int nsides = nSides;
+
+    //Define o tamanho de phi e dphi
+    phi.resize(nshape);
+    dphi.resize(2, nshape);
+
     // Linear order
-    phi[0] =  1.-xi[0]-xi[1];
-    phi[1] =  xi[0];
-    phi[2] =  xi[1];
-    dphi(0,0) = -1.;
-    dphi(1,0) = -1.;
-    dphi(0,1) =  1.;
-    dphi(1,1) =  0.;
-    dphi(0,2) =  0.;
-    dphi(1,2) =  1.;
-    
-    std::cout << "Please implement me\n";
-    DebugStop();
-    
-    
+    phi[0] = 1. - xi[0] - xi[1];
+    phi[1] = xi[0];
+    phi[2] = xi[1];
+
+    dphi(0, 0) = -1.;
+    dphi(1, 0) = -1.;
+    dphi(0, 1) = 1.;
+    dphi(1, 1) = 0.;
+    dphi(0, 2) = 0.;
+    dphi(1, 2) = 1.;
+
+    int count = 3;
+
+    //calcula os sides shapes
+    for (int i = 3; i < 6; i++) {
+        if (orders(i) == 2) {
+            switch (count)
+            {
+            case 3:
+                phi(count) = 4. * phi[0] * phi[1];
+                dphi(0, count) = (1. - 2. * xi[0] * xi[1]) * 4.;
+                dphi(1, count) = (xi[0] - xi[0] * xi[0]) * 4.;
+                break;
+            case 4:
+                phi(count) = 4. * phi[1] * phi[2];
+                dphi(0, count) = xi[1] * 4.;
+                dphi(1, count) = xi[0] * 4.;
+                break;
+            case 5:
+                phi(count) = 4. * phi[0] * phi[2];
+                dphi(0, count) = (xi[1] - xi[1] * xi[1]) * 4.;
+                dphi(1, count) = (-xi[1] * xi[1]) * 4.;
+                break;
+            }
+            count++;
+        }
+        else if (orders(i) != 1) DebugStop();
+    }
+
+
+    //calcula o shape do internal side
+    if (orders(6) == 3) {
+        phi(count) = 27. * phi[0] * phi[1] * phi[2];
+        dphi(0, count) = (xi[1] - 2. * xi[1] * xi[1] * xi[0]) * 27.;
+        dphi(1, count) = (xi[0] - 2. * xi[0] * xi[0] * xi[1]) * 27.;
+        count++;
+    }
+    else if (orders(6) != 1 && orders(6) != 2) DebugStop();
+
+
+    if (count != nshape) DebugStop();
+  
 }
 
 /// returns the number of shape functions associated with a side
