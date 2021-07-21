@@ -74,10 +74,23 @@ int main ()
     auto force = [](const VecDouble &x, VecDouble &res)
     {
         
-        res[0] = 16 * ((-((-1 + x[1]) * x[1]) + x[0] * (1 + 50 * x[1] - 50 * x[1] * x[1]) 
-            + x[0] * x[0] * (-1 - 50 * x[1] + 50 * x[1] * x[1])) * cos(10 * x[1]) 
-            + 10 * (-1 + x[0]) * x[0] * (-1 + 2 * x[1]) * sin(10 * x[1]));
+        res[0] = 16. * ((-((-1. + x[1]) * x[1]) + x[0] * (1. + 50. * x[1] - 50. * x[1] * x[1]) 
+            + x[0] * x[0] * (-1. - 50. * x[1] + 50. * x[1] * x[1])) * cos(10. * x[1]) 
+            + 10. * (-1. + x[0]) * x[0] * (-1. + 2. * x[1]) * sin(10. * x[1]));
     };
+
+    auto exact = [](const VecDouble& x, VecDouble& val, MatrixDouble& deriv)
+    {
+
+
+        val[0] = 8. * (-1. + x[0]) * x[0] * (-1. + x[1]) * x[1] * cos(10. * x[1]);
+
+        deriv(0, 0) = 8. * (-1. + 2. * x[0]) * (-1. + x[1]) * x[1] * cos(10. * x[1]);
+
+        deriv(1, 0) = 8. * (-1. + x[0]) * x[0] * ((-1. + 2. * x[1]) * cos(0. * x[1]) - 10. * (-1. + x[1]) * x[1] * sin(10. * x[1]));
+
+    };
+
     mat1->SetForceFunction(force);
     MatrixDouble proj(1,1),val1(1,1),val2(1,1);
     proj.setZero();
@@ -87,7 +100,11 @@ int main ()
     L2Projection *bc_point = new L2Projection(0,3,proj,val1,val2);
     //L2Projection* bc_linha = new L2Projection(0, 2, proj, val1, val2);
     //L2Projection* bc_point = new L2Projection(0, 3, proj, val1, val2);
+    bc_linha->SetExactSolution(exact);
+    bc_point->SetExactSolution(exact);
+
     std::vector<MathStatement*> mathvec = { 0,mat1,bc_linha,bc_point};
+
     cmesh.SetMathVec(mathvec);
     cmesh.SetDefaultOrder(2);
     cmesh.AutoBuild();
@@ -96,17 +113,7 @@ int main ()
         Analysis locAnalysis(&cmesh);
     locAnalysis.RunSimulation();
     PostProcessTemplate<Poisson> postprocess;
-    auto exact = [](const VecDouble &x, VecDouble &val, MatrixDouble &deriv)
-    {
-
-
-        val[0] = 8 * (-1 + x[0]) * x[0] * (-1 + x[1]) * x[1] * cos(10 * x[1]);
-
-        deriv(0, 0) = 8 * (-1 + 2 * x[0]) * (-1 + x[1]) * x[1] * cos(10 * x[1]);
-
-        deriv(1, 0) = 8 * (-1 + x[0]) * x[0] * ((-1 + 2 * x[1]) * cos(0 * x[1]) - 10 * (-1 + x[1]) * x[1] * sin(10 * x[1]));
-
-    };
+    
 
 
     postprocess.AppendVariable("Sol");
