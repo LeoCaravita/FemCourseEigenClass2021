@@ -58,7 +58,7 @@ int main ()
 {
     GeoMesh gmesh;
     ReadGmsh read;
-    std::string filename("quad0.msh");
+    std::string filename("trian1.msh");
 
     read.Read(gmesh,filename);
 
@@ -74,20 +74,27 @@ int main ()
     auto force = [](const VecDouble &x, VecDouble &res)
     {
         
-        res[0] = 16. * ((-((-1. + x[1]) * x[1]) + x[0] * (1. + 50. * x[1] - 50. * x[1] * x[1]) 
-            + x[0] * x[0] * (-1. - 50. * x[1] + 50. * x[1] * x[1])) * cos(10. * x[1]) 
-            + 10. * (-1. + x[0]) * x[0] * (-1. + 2. * x[1]) * sin(10. * x[1]));
+       // res[0] = 16. * ((-((-1. + x[1]) * x[1]) + x[0] * (1. + 50. * x[1] - 50. * x[1] * x[1]) 
+       //     + x[0] * x[0] * (-1. - 50. * x[1] + 50. * x[1] * x[1])) * cos(10. * x[1]) 
+       //     + 10. * (-1. + x[0]) * x[0] * (-1. + 2. * x[1]) * sin(10. * x[1]));
+
+        res[0] = -(16. * (-1. + x[1] * x[1] * cos(10. * x[1])) + 8 * x[0] * x[0] * (2 * cos(10. * x[1])
+            - 100. * x[1] * x[1] * cos(10. * x[1]) - 40. * x[1] * sin(10. * x[1])));
+
     };
 
     auto exact = [](const VecDouble& x, VecDouble& val, MatrixDouble& deriv)
     {
 
+        val[0] = 8. * (-1. + x[0] * x[0] * (-1. + x[1] * x[1] * cos(10. * x[1])));
 
-        val[0] = 8. * (-1. + x[0]) * x[0] * (-1. + x[1]) * x[1] * cos(10. * x[1]);
+        deriv(0, 0) = -16. * x[0] + 16. * x[1] * x[1] * x[0] * cos(10. * x[1]);
 
-        deriv(0, 0) = 8. * (-1. + 2. * x[0]) * (-1. + x[1]) * x[1] * cos(10. * x[1]);
+        deriv(1, 0) = 16. * x[1] * x[0] * x[0] * cos(10. * x[1]) - 80. * x[1] * x[1] * x[0] * x[0] * sin(10. * x[1]);
 
-        deriv(1, 0) = 8. * (-1. + x[0]) * x[0] * ((-1. + 2. * x[1]) * cos(0. * x[1]) - 10. * (-1. + x[1]) * x[1] * sin(10. * x[1]));
+        //deriv(0, 0) = 8. * (-1. + 2. * x[0]) * (-1. + x[1]) * x[1] * cos(10. * x[1]);
+
+        //deriv(1, 0) = 8. * (-1. + x[0]) * x[0] * ((-1. + 2. * x[1]) * cos(0. * x[1]) - 10. * (-1. + x[1]) * x[1] * sin(10. * x[1]));
 
     };
 
@@ -106,7 +113,7 @@ int main ()
     std::vector<MathStatement*> mathvec = { 0,mat1,bc_linha,bc_point};
 
     cmesh.SetMathVec(mathvec);
-    cmesh.SetDefaultOrder(2);
+    cmesh.SetDefaultOrder(1);
     cmesh.AutoBuild();
     cmesh.Resequence();
 
@@ -126,7 +133,7 @@ int main ()
     mat1->SetExactSolution(exact);
 
 
-    locAnalysis.PostProcessSolution("quad0.vtk", postprocess);
+    locAnalysis.PostProcessSolution("trian1.vtk", postprocess);
 
     VecDouble errvec;
     errvec = locAnalysis.PostProcessError(std::cout, postprocess);

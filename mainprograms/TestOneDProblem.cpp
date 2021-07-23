@@ -94,9 +94,10 @@ void exact(const VecDouble &point,VecDouble &val, MatrixDouble &deriv){
     //deriv(0, 0) = 4. - point[0];
     //val[0] = point[0] * (8. - point[0]) / 2.;
 
-
+    // derivada
     deriv(0, 0) = 10. - 2. * point[0];
 
+    // função exata
     val[0] = point[0] * (12. - point[0]) - 2. * point[0];
 
     return;
